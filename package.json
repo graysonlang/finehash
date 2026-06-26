@@ -1,0 +1,80 @@
+{
+  "name": "@graysonlang/finehash",
+  "version": "1.0.0",
+  "description": "Deterministic image placeholder hashes that decode to a blurred preview before the full image loads.",
+  "keywords": [
+    "hash",
+    "thumbnail",
+    "placeholder",
+    "blurhash",
+    "thumbhash",
+    "image",
+    "lqip"
+  ],
+  "homepage": "https://github.com/graysonlang/finehash#readme",
+  "bugs": {
+    "url": "https://github.com/graysonlang/finehash/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graysonlang/finehash.git"
+  },
+  "license": "MIT",
+  "author": "Grayson Lang",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/finehash.js",
+  "module": "./dist/finehash.js",
+  "types": "./dist/public.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/public.d.ts",
+      "default": "./dist/finehash.js"
+    }
+  },
+  "sideEffects": false,
+  "directories": {
+    "example": "example"
+  },
+  "files": [
+    "dist/finehash.js",
+    "dist/public.d.ts",
+    "dist/encode.d.ts",
+    "dist/decode.d.ts",
+    "dist/size.d.ts",
+    "dist/types.d.ts"
+  ],
+  "scripts": {
+    "build": "node ./scripts/build.mjs --lint --minify",
+    "serve": "node ./scripts/build.mjs --lint --sourcemap --watch --serve --debug-port=9222",
+    "serve:https": "ESP_DEV_CERT_NAME=$npm_package_config_esp_dev_cert_name npm run serve -- --host=0.0.0.0 --port=8443",
+    "dev": "npm run serve -- --proxy --launch",
+    "dev:https": "npm run serve:https -- --proxy --launch",
+    "vscode:build": "npm run build -- --vscode",
+    "vscode:debug": "npm run serve -- --vscode",
+    "vscode:debug:https": "npm run serve:https -- --vscode",
+    "cert:dev": "ESP_DEV_CERT_NAME=$npm_package_config_esp_dev_cert_name esp-generate-dev-cert",
+    "dist": "node ./scripts/dist.mjs",
+    "gen:samples": "node ./scripts/gen-samples.mjs",
+    "prepublishOnly": "npm run dist",
+    "lint": "eslint . --ignore-pattern 'dist'",
+    "typecheck": "tsc --noEmit",
+    "test": "node test/downsample.test.mjs && node test/color.test.mjs && node test/dct.test.mjs && node test/allocate.test.mjs && node test/pack.test.mjs && node test/codec.test.mjs"
+  },
+  "config": {
+    "esp_dev_cert_name": "graysonlang-finehash-dev"
+  },
+  "devDependencies": {
+    "@graysonlang/esp": "^1.6.0",
+    "@napi-rs/canvas": "^1.0.2",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "blurhash": "^2.0.5",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.39.4",
+    "thumbhash": "^0.1.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0"
+  }
+}
