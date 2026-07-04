@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FineHash — comparison</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=" />
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #181818;
+      --line: #2a2a2a;
+      --fg: #ddd;
+      --muted: #888;
+      --accent: #6cf;
+      --fine: #e8912a;
+      --cell: 140px;
+      --checker-dark: #111 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="white" fill-opacity="0.025"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
+      --checker-light: #fff 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="black" fill-opacity="0.05"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
+      --checker: var(--checker-dark);
+    }
+    body.checker-light { --checker: var(--checker-light); }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 32px;
+    }
+    header { margin-bottom: 8px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    p.lede { color: var(--muted); }
+    p.lede code { color: var(--accent); }
+
+    #dropzone {
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      overflow: auto;
+    }
+    #dropzone.dragover { border-color: var(--accent); background: #141a1f; }
+
+    table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    thead th {
+      position: sticky; top: 0;
+      background: var(--panel);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    tbody td {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    tbody tr:hover { background: #151515; }
+
+    thead th:nth-child(2) {
+      color: var(--fine);
+      border-top: 2px solid var(--fine);
+      border-left: 2px solid var(--fine);
+      border-right: 2px solid var(--fine);
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+    tbody td:nth-child(2) {
+      border-left: 2px solid var(--fine);
+      border-right: 2px solid var(--fine);
+      background: rgba(232, 145, 42, 0.05);
+    }
+    tbody tr:last-child td:nth-child(2) {
+      border-bottom: 2px solid var(--fine);
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .cell { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+    .cell canvas, .cell img {
+      max-width: var(--cell);
+      max-height: var(--cell);
+      background: var(--checker);
+      display: block;
+      cursor: pointer;
+    }
+    .cell .meta { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .cell .meta b { color: var(--fg); font-weight: 600; }
+    .cell .hash {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--accent);
+      max-width: var(--cell);
+      word-break: break-all;
+      cursor: pointer;
+      user-select: all;
+    }
+    .cell .hash:hover { color: #9df; }
+    .cell .perf { width: var(--cell); }
+    .cell .perf-track {
+      height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden;
+    }
+    .cell .perf-fill {
+      height: 100%; min-width: 1px; border-radius: 3px;
+      background: linear-gradient(90deg, #4a9fd4, #9df);
+    }
+    .cell .perf-label { font-size: 10px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .cell.pending canvas { opacity: 0.35; }
+    .badge {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #d9a441; border: 1px solid #5a4a22; border-radius: 999px; padding: 1px 7px;
+    }
+    .label { color: var(--fg); font-size: 12px; }
+    footer { color: var(--muted); font-size: 12px; margin-top: 20px; }
+
+    #hero {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; flex-wrap: wrap;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 28px 24px; margin-bottom: 28px;
+    }
+    #hero .step {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      flex: 1 1 220px; min-width: 200px; max-width: 300px;
+    }
+    #hero canvas {
+      max-width: 100%; background: var(--checker); display: block; cursor: pointer;
+    }
+    #hero canvas.pending { opacity: 0.6; border: 1px dashed var(--line); }
+    #hero .arrow { color: var(--muted); font-size: 26px; flex: 0 0 auto; }
+    #hero .caption {
+      color: var(--muted); font-size: 13px; text-align: center;
+      line-height: 1.45; max-width: 26ch;
+    }
+    #hero .cta {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      align-items: center; justify-content: center;
+      color: var(--muted); font-size: 13px; text-align: center; line-height: 1.4;
+    }
+    #hero button {
+      font: inherit; font-size: 13px; color: var(--fg); background: #262626;
+      border: 1px solid var(--line); border-radius: 7px; padding: 6px 14px; cursor: pointer;
+    }
+    #hero button:hover { border-color: var(--accent); color: #fff; }
+    .hexbox {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px; line-height: 1.7; letter-spacing: 0.06em;
+      color: var(--fg); white-space: pre; text-align: center;
+      min-height: 90px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    }
+    .hexbox.pending { color: var(--muted); }
+    .hexbox .pending-note {
+      font-family: system-ui, sans-serif; font-size: 12px; max-width: 26ch; line-height: 1.45;
+    }
+    .hexbox .pending-note b { color: var(--fg); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 12px; }
+
+    .controls { display: flex; gap: 10px; align-items: center; margin: 0 0 24px; }
+    .toggle {
+      font: inherit; font-size: 12px; color: var(--fg); background: #262626;
+      border: 1px solid var(--line); border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .toggle:hover { border-color: var(--accent); }
+    .toggle .swatch {
+      width: 14px; height: 14px; border-radius: 3px;
+      border: 1px solid var(--line); background: var(--checker);
+    }
+    .control {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--muted);
+    }
+    .control select {
+      font: inherit; font-size: 12px; color: var(--fg); background: #1d1d1d;
+      border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; cursor: pointer;
+    }
+    .controls .hint { font-size: 11px; color: var(--muted); }
+    .controls .hint b { color: var(--fg); font-weight: 600; }
+  </style>
+  <script src="./main.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <h1>FineHash — side-by-side comparison</h1>
+    <p class="lede">
+      <b>FineHash</b> is a small TypeScript/JavaScript library that turns an image into a placeholder
+      hash. <a href="https://github.com/graysonlang/finehash" style="color:var(--accent)">Source and format
+      details on GitHub</a>.
+    </p>
+    <p class="lede">
+      The columns below mirror the
+      <a href="https://evanw.github.io/thumbhash/" style="color:var(--accent)">ThumbHash</a> demo —
+      <b>ThumbHash</b>, <b>BlurHash</b>, and a <b><i>"Teeny"</i> WebP</b> (an uber-compressed WebP) — with
+      <b>FineHash</b> added alongside. Drag/drop or <code>Upload</code> your own images to compare.
+    </p>
+    <p class="lede">
+      <i>(Note: The WebP column is omitted on WebKit-based browsers such as Safari, which do not support WebP encoding via <code>canvas.toDataURL</code>).</i>
+    </p>
+  </header>
+
+  <section id="hero">
+    <div class="step">
+      <canvas id="hero-img"></canvas>
+      <div class="cta">
+        <button id="upload-btn" type="button">Upload</button>
+        <span>or drag/drop anywhere to try your own image</span>
+      </div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div id="hero-hash" class="hexbox"></div>
+      <div class="caption">FineHash encodes the image into a few dozen bytes</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <canvas id="hero-render"></canvas>
+      <div class="caption">Render the FineHash as a placeholder before the full image loads</div>
+    </div>
+  </section>
+  <input id="file-input" type="file" accept="image/*" multiple hidden />
+
+  <div class="controls">
+    <button id="checker-toggle" type="button" class="toggle">
+      <span class="swatch"></span>Checkerboard: <b id="checker-label">dark</b>
+    </button>
+    <span class="hint">shift-hover any placeholder to peek at the original</span>
+  </div>
+  <div id="dropzone">
+    <table>
+      <thead><tr id="head-row"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <footer id="status"></footer>
+</body>
+</html>
