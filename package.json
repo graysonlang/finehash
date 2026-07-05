@@ -35,6 +35,8 @@
   ],
   "scripts": {
     "build": "node ./scripts/build.mjs --minify",
+    "test": "node ./scripts/test.mjs",
+    "deploy-test": "node ./scripts/pack-test.mjs",
     "serve": "node ./scripts/build.mjs --sourcemap --watch --serve --debug-port=9222",
     "dev": "npm run serve -- --proxy --launch",
     "vscode:build": "npm run build -- --vscode",
@@ -43,10 +45,12 @@
   },
   "devDependencies": {
     "@graysonlang/esp": "^1.6.3",
+    "@graysonlang/slim-webp-enc": "^1.2.0",
     "@napi-rs/canvas": "^1.0.2",
     "blurhash": "^2.0.5",
     "esbuild": "^0.28.1",
-    "thumbhash": "^0.1.1"
+    "thumbhash": "^0.1.1",
+    "typescript": "^5.8.0"
   },
   "publishConfig": {
     "access": "public"

@@ -7,6 +7,7 @@ export function getFilePaths() {
 
 import { encode as blurhashEncode, decode as blurhashDecode } from 'blurhash';
 import { rgbaToThumbHash, thumbHashToRGBA } from 'thumbhash';
+import { encodeWebP } from '@graysonlang/slim-webp-enc';
 
 // A real consumer would `import ... from '@graysonlang/finehash'`; the demo
 // imports the local source directly so it always tracks src/.
@@ -14,13 +15,15 @@ import * as finehash from '../src/finehash.js';
 
 import { createSampleSuite } from './samples.mjs';
 
-const WEBP_SUPPORTED = (() => {
+// Whether the canvas can encode WebP natively (Chromium/Firefox). WebKit
+// cannot, so there the Teeny WebP column encodes with slim-webp-enc instead.
+const NATIVE_WEBP = (() => {
   const c = document.createElement('canvas');
   c.width = c.height = 1;
   return c.toDataURL('image/webp', 0).startsWith('data:image/webp');
 })();
 
-const COLUMNS = ['Original', 'FineHash', 'ThumbHash', 'BlurHash', ...(WEBP_SUPPORTED ? ['Teeny WebP'] : [])];
+const COLUMNS = ['Original', 'FineHash', 'ThumbHash', 'BlurHash', 'Teeny WebP'];
 // Longest preview side, px - read from the page's --cell so it lives in one place.
 const CELL = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell')) || 140;
 const WORK_MAX = 100; // working-grid longest side for hashing
@@ -202,14 +205,22 @@ function thumbhashCell(work, dw, dh, originalBytes) {
 // A 16x16, 0%-quality WebP whose "hash" is the chunk data needed to reconstruct:
 // the VP8 (color) chunk, plus the ALPH (alpha) chunk when the source is
 // transparent. RIFF/VP8X framing is regenerable, so - matching the demo's
-// VP8-chunk convention - it isn't counted.
+// VP8-chunk convention - it isn't counted. The encoder is the browser's own
+// (quality 0) where the canvas can emit WebP; on WebKit it is slim-webp-enc
+// at the same quality, forced lossy so a VP8 chunk always exists to count.
 function teenyEncode(img) {
   const canvas = el('canvas', { width: 16, height: 16 });
-  ctx2d(canvas).drawImage(img, 0, 0, 16, 16); // no white flatten - keep transparency
-  const prefix = 'data:image/webp;base64,';
-  const url = canvas.toDataURL('image/webp', 0);
-  if (!url.startsWith(prefix)) return null;
-  const bytes = Uint8Array.from(atob(url.slice(prefix.length)), x => x.charCodeAt(0));
+  const c = ctx2d(canvas);
+  c.drawImage(img, 0, 0, 16, 16); // no white flatten - keep transparency
+  let bytes;
+  if (NATIVE_WEBP) {
+    const prefix = 'data:image/webp;base64,';
+    const url = canvas.toDataURL('image/webp', 0);
+    if (!url.startsWith(prefix)) return null;
+    bytes = Uint8Array.from(atob(url.slice(prefix.length)), x => x.charCodeAt(0));
+  } else {
+    bytes = encodeWebP(c.getImageData(0, 0, 16, 16), { quality: 0, lossless: false });
+  }
   let rgb = null;
   let alpha = null;
   for (let o = 12; o + 8 <= bytes.length;) {
@@ -219,14 +230,20 @@ function teenyEncode(img) {
     else if (tag === 'ALPH') alpha = bytes.subarray(o + 8, o + 8 + len);
     o += 8 + len + (len & 1); // chunk payloads are padded to even length
   }
-  return rgb ? { url, rgb, alpha } : null;
+  return rgb ? { bytes, rgb, alpha } : null;
 }
 
 // Decode the WebP to 16x16 and apply the demo's 2-pass box blur - but in
 // PREMULTIPLIED space and over all four channels, so transparent edges blur
 // cleanly (straight-alpha blurring fringes dark/colored halos around cutouts).
-async function teenyBlur(url) {
-  const img = await loadImage(url);
+async function teenyBlur(bytes) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'image/webp' }));
+  let img;
+  try {
+    img = await loadImage(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
   const canvas = el('canvas', { width: 16, height: 16 });
   const c = ctx2d(canvas);
   c.drawImage(img, 0, 0, 16, 16);
@@ -306,13 +323,13 @@ async function teenyWebpCell(img, dw, dh, originalBytes) {
   if (!webp) {
     return cell(out, '<span class="badge">no webp</span>');
   }
-  const { url, rgb, alpha } = webp;
+  const { rgb, alpha } = webp;
   const bytes = rgb.length + (alpha ? alpha.length : 0);
   const hash = alpha ? Uint8Array.from([...alpha, ...rgb]) : rgb;
   const b64 = btoa(String.fromCharCode(...hash));
   const ctx = ctx2d(out);
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(await teenyBlur(url), 0, 0, dw, dh);
+  ctx.drawImage(await teenyBlur(webp.bytes), 0, 0, dw, dh);
   const tag = alpha ? ' VP8+&alpha;' : ' VP8';
   return cell(peekable(out), `<b>${bytes}</b> B${tag} &middot; ${b64.length} chars`, { hash: b64, bytes, originalBytes });
 }
@@ -418,7 +435,7 @@ async function buildRow(src) {
     fineTd,
     thumbhashCell(work, dw, dh, originalBytes),
     blurhashCell(work, dw, dh, originalBytes),
-    ...(WEBP_SUPPORTED ? [await teenyWebpCell(img, dw, dh, originalBytes)] : []),
+    await teenyWebpCell(img, dw, dh, originalBytes),
   ]);
 }
 
@@ -476,16 +493,68 @@ function setupUpload() {
   });
 }
 
-function toggleChecker() {
-  const light = document.body.classList.toggle('checker-light');
-  document.getElementById('checker-label').textContent = light ? 'light' : 'dark';
-}
+function setupThemeAndChecker() {
+  const THEME_KEY = 'finehash-theme';
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const effectiveTheme = () => {
+    const attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'light' || attr === 'dark') return attr;
+    return darkQuery.matches ? 'dark' : 'light';
+  };
 
-function setupCheckerToggle() {
+  const checkerLabel = document.getElementById('checker-label');
+  const effectiveChecker = () => {
+    if (document.body.classList.contains('checker-light')) return 'light';
+    if (document.body.classList.contains('checker-dark')) return 'dark';
+    return effectiveTheme();
+  };
+  const updateCheckerLabel = () => {
+    checkerLabel.textContent = effectiveChecker();
+  };
+  const toggleChecker = () => {
+    const next = effectiveChecker() === 'light' ? 'dark' : 'light';
+    document.body.classList.toggle('checker-light', next === 'light');
+    document.body.classList.toggle('checker-dark', next === 'dark');
+    updateCheckerLabel();
+  };
+  const resetChecker = () => {
+    document.body.classList.remove('checker-light', 'checker-dark');
+  };
+
   document.getElementById('checker-toggle').addEventListener('click', toggleChecker);
   document.addEventListener('click', (e) => {
     if (e.target.tagName === 'CANVAS' && e.target.closest('.cell, #hero')) toggleChecker();
   });
+
+  const segButtons = [...document.querySelectorAll('.theme-seg .icon-btn')];
+  const themeMode = () => {
+    let stored = null;
+    try { stored = localStorage.getItem(THEME_KEY); } catch { /* private mode, etc. */ }
+    return stored === 'light' || stored === 'dark' ? stored : 'system';
+  };
+  const renderTheme = () => {
+    const mode = themeMode();
+    for (const b of segButtons) b.classList.toggle('active', b.dataset.mode === mode);
+    updateCheckerLabel();
+  };
+  for (const b of segButtons) {
+    b.addEventListener('click', () => {
+      const mode = b.dataset.mode;
+      try {
+        if (mode === 'system') localStorage.removeItem(THEME_KEY);
+        else localStorage.setItem(THEME_KEY, mode);
+      } catch { /* private mode, etc. */ }
+      if (mode === 'system') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', mode);
+      resetChecker();
+      renderTheme();
+    });
+  }
+  darkQuery.addEventListener('change', () => {
+    resetChecker();
+    renderTheme();
+  });
+  renderTheme();
 }
 
 // Shift-hover any placeholder preview to peek at the row's original.
@@ -533,7 +602,7 @@ window.addEventListener('load', async () => {
   buildHead();
   setupDropzone();
   setupUpload();
-  setupCheckerToggle();
+  setupThemeAndChecker();
   setupPeek();
   const urls = syntheticSamples();
   if (urls[0]) loadImage(urls[0]).then(featureImage).catch(console.error);

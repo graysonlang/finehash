@@ -5,22 +5,67 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FineHash — comparison</title>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=" />
+  <!-- Set the saved theme before first paint so there's no flash. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('finehash-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode, etc. */ }
+    })();
+  </script>
   <style>
     :root {
+      --bg: #f6f5f1;
+      --panel: #fdfdfb;
+      --line: #e0ddd4;
+      --fg: #1e1d22;
+      --muted: #7a766c;
+      --accent: #0b78c2;
+      --accent-hover: #064f84;
+      --hero: #d97e14;
+      --btn: #f1efe9;
+      --field: #fbfaf7;
+      --hover: #f1efe9;
+      --cell: 140px;
+      --checker-dark: #111 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="white" fill-opacity="0.025"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
+      --checker-light: #fff 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="black" fill-opacity="0.05"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
+      --checker: var(--checker-light);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #111;
+        --panel: #181818;
+        --line: #2a2a2a;
+        --fg: #ddd;
+        --muted: #888;
+        --accent: #6cf;
+        --accent-hover: #9df;
+        --hero: #e8912a;
+        --btn: #262626;
+        --field: #1d1d1d;
+        --hover: #151515;
+        --checker: var(--checker-dark);
+      }
+    }
+    :root[data-theme="dark"] {
       --bg: #111;
       --panel: #181818;
       --line: #2a2a2a;
       --fg: #ddd;
       --muted: #888;
       --accent: #6cf;
-      --fine: #e8912a;
-      --cell: 140px;
-      --checker-dark: #111 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="white" fill-opacity="0.025"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
-      --checker-light: #fff 0px 0px / 16px url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="black" fill-opacity="0.05"><rect width="1" height="1" /><rect x="1" y="1" width="1" height="1" /></svg>');
+      --accent-hover: #9df;
+      --hero: #e8912a;
+      --btn: #262626;
+      --field: #1d1d1d;
+      --hover: #151515;
       --checker: var(--checker-dark);
     }
     body.checker-light { --checker: var(--checker-light); }
+    body.checker-dark { --checker: var(--checker-dark); }
     * { box-sizing: border-box; }
+    html { background: var(--bg); }
     body {
       background: var(--bg);
       color: var(--fg);
@@ -30,15 +75,16 @@
     }
     header { margin-bottom: 8px; }
     h1 { font-size: 20px; margin: 0 0 4px; }
-    p.lede { color: var(--muted); }
+    p.lede { color: var(--muted); line-height: 1.55; }
     p.lede code { color: var(--accent); }
+    p.lede b { color: var(--fg); }
 
     #dropzone {
       border: 1px dashed var(--line);
       border-radius: 10px;
       overflow: auto;
     }
-    #dropzone.dragover { border-color: var(--accent); background: #141a1f; }
+    #dropzone.dragover { border-color: var(--accent); background: var(--hover); }
 
     table { border-collapse: separate; border-spacing: 0; width: 100%; }
     thead th {
@@ -58,23 +104,23 @@
       border-bottom: 1px solid var(--line);
       vertical-align: top;
     }
-    tbody tr:hover { background: #151515; }
+    tbody tr:hover { background: var(--hover); }
 
     thead th:nth-child(2) {
-      color: var(--fine);
-      border-top: 2px solid var(--fine);
-      border-left: 2px solid var(--fine);
-      border-right: 2px solid var(--fine);
+      color: var(--hero);
+      border-top: 2px solid var(--hero);
+      border-left: 2px solid var(--hero);
+      border-right: 2px solid var(--hero);
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
     }
     tbody td:nth-child(2) {
-      border-left: 2px solid var(--fine);
-      border-right: 2px solid var(--fine);
+      border-left: 2px solid var(--hero);
+      border-right: 2px solid var(--hero);
       background: rgba(232, 145, 42, 0.05);
     }
     tbody tr:last-child td:nth-child(2) {
-      border-bottom: 2px solid var(--fine);
+      border-bottom: 2px solid var(--hero);
       border-bottom-left-radius: 10px;
       border-bottom-right-radius: 10px;
     }
@@ -99,10 +145,10 @@
       cursor: pointer;
       user-select: all;
     }
-    .cell .hash:hover { color: #9df; }
+    .cell .hash:hover { color: var(--accent-hover); }
     .cell .perf { width: var(--cell); }
     .cell .perf-track {
-      height: 5px; background: #2a2a2a; border-radius: 3px; overflow: hidden;
+      height: 5px; background: var(--line); border-radius: 3px; overflow: hidden;
     }
     .cell .perf-fill {
       height: 100%; min-width: 1px; border-radius: 3px;
@@ -142,10 +188,10 @@
       color: var(--muted); font-size: 13px; text-align: center; line-height: 1.4;
     }
     #hero button {
-      font: inherit; font-size: 13px; color: var(--fg); background: #262626;
+      font: inherit; font-size: 13px; color: var(--fg); background: var(--btn);
       border: 1px solid var(--line); border-radius: 7px; padding: 6px 14px; cursor: pointer;
     }
-    #hero button:hover { border-color: var(--accent); color: #fff; }
+    #hero button:hover { border-color: var(--accent); }
     .hexbox {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 14px; line-height: 1.7; letter-spacing: 0.06em;
@@ -162,7 +208,7 @@
 
     .controls { display: flex; gap: 10px; align-items: center; margin: 0 0 24px; }
     .toggle {
-      font: inherit; font-size: 12px; color: var(--fg); background: #262626;
+      font: inherit; font-size: 12px; color: var(--fg); background: var(--btn);
       border: 1px solid var(--line); border-radius: 7px; padding: 5px 12px; cursor: pointer;
       display: inline-flex; align-items: center; gap: 8px;
     }
@@ -176,15 +222,94 @@
       font-size: 12px; color: var(--muted);
     }
     .control select {
-      font: inherit; font-size: 12px; color: var(--fg); background: #1d1d1d;
+      font: inherit; font-size: 12px; color: var(--fg); background: var(--field);
       border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; cursor: pointer;
     }
     .controls .hint { font-size: 11px; color: var(--muted); }
     .controls .hint b { color: var(--fg); font-weight: 600; }
+
+    .corner { position: absolute; top: 24px; right: 32px; display: flex; align-items: center; gap: 2px; }
+    .corner-div { width: 1px; height: 18px; margin: 0 5px; background: var(--line); }
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      cursor: pointer;
+      opacity: 0.55;
+      text-decoration: none;
+      transition: opacity 160ms ease, color 160ms ease,
+        background-color 160ms ease, border-color 160ms ease;
+    }
+    .icon-btn:hover {
+      opacity: 1;
+      color: var(--fg);
+      background: var(--panel);
+      border-color: var(--line);
+    }
+    .icon-btn svg { width: 18px; height: 18px; display: block; }
+    .theme-seg {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+    .theme-seg .icon-btn { width: 26px; height: 26px; border-radius: 999px; }
+    .theme-seg .icon-btn svg { width: 14px; height: 14px; }
+    .theme-seg .icon-btn.active {
+      opacity: 1;
+      color: var(--fg);
+      background: var(--btn);
+      border-color: var(--line);
+    }
+    @media (max-width: 720px) {
+      body { padding: 24px; }
+      .corner { position: static; justify-content: flex-end; margin-bottom: 18px; }
+    }
   </style>
   <script src="./main.js" type="module"></script>
 </head>
 <body>
+  <div class="corner">
+    <a class="icon-btn" href="https://github.com/graysonlang/finehash" aria-label="Source on GitHub" title="Source on GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+      </svg>
+    </a>
+    <a class="icon-btn" href="https://www.npmjs.com/package/@graysonlang/finehash" aria-label="Package on npm" title="Package on npm">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.076 19.17H5.113z"/>
+      </svg>
+    </a>
+    <span class="corner-div" aria-hidden="true"></span>
+    <div class="theme-seg" role="group" aria-label="Color theme">
+      <button data-mode="light" class="icon-btn" type="button" aria-label="Light theme" title="Light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+      </button>
+      <button data-mode="system" class="icon-btn" type="button" aria-label="Follow system theme" title="System">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+          <path d="M8 21h8M12 17v4"></path>
+        </svg>
+      </button>
+      <button data-mode="dark" class="icon-btn" type="button" aria-label="Dark theme" title="Dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
   <header>
     <h1>FineHash — side-by-side comparison</h1>
     <p class="lede">
@@ -199,7 +324,11 @@
       <b>FineHash</b> added alongside. Drag/drop or <code>Upload</code> your own images to compare.
     </p>
     <p class="lede">
-      <i>(Note: The WebP column is omitted on WebKit-based browsers such as Safari, which do not support WebP encoding via <code>canvas.toDataURL</code>).</i>
+      Note: WebKit-based browsers (Safari) can't encode WebP from a canvas, so the
+      <i>"Teeny"</i> WebP column falls back to the
+      <a href="https://github.com/graysonlang/slim-webp-enc" style="color:var(--accent)">slim-webp-enc</a>
+      library there instead of the native pathway used elsewhere — expect slight differences
+      versus browsers with native support (e.g. Chromium/Firefox).
     </p>
   </header>
 
