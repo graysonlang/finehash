@@ -61,7 +61,7 @@
       "presentation": {
         "close": true
       }
-    }
+    },
     {
       "label": "Kill debug server",
       "type": "shell",

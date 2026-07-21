@@ -34,21 +34,27 @@
     "src/finehash.d.ts"
   ],
   "scripts": {
-    "build": "node ./scripts/build.mjs --minify",
+    "prepare": "node ./scripts/build.mjs --sync-launch",
+    "ports": "node ./scripts/build.mjs --print-port",
+    "sync:launch": "node ./scripts/build.mjs --sync-launch",
+    "build": "node ./scripts/build.mjs --lint --minify",
     "test": "node ./scripts/test.mjs",
     "deploy-test": "node ./scripts/pack-test.mjs",
-    "serve": "node ./scripts/build.mjs --sourcemap --watch --serve --debug-port=9222",
+    "serve": "node ./scripts/build.mjs --lint --sourcemap --watch --serve --debug-port=auto",
     "dev": "npm run serve -- --proxy --launch",
     "vscode:build": "npm run build -- --vscode",
     "vscode:debug": "npm run serve -- --vscode",
+    "lint": "eslint . --ignore-pattern '{dist,www}/**'",
     "gen:samples": "node ./scripts/gen-samples.mjs"
   },
   "devDependencies": {
-    "@graysonlang/esp": "^1.6.3",
+    "@graysonlang/esp": "^1.7.0",
     "@graysonlang/slim-webp-enc": "^1.2.0",
     "@napi-rs/canvas": "^1.0.2",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "blurhash": "^2.0.5",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.39.4",
     "thumbhash": "^0.1.1",
     "typescript": "^5.8.0"
   },

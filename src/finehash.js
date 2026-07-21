@@ -37,7 +37,7 @@ function clamp(v, lo, hi) {
 
 function workingDims(width, height, maxSide = WORKING_MAX) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) {
-    throw new Error("invalid dimensions");
+    throw new Error('invalid dimensions');
   }
   const long = Math.max(width, height);
   if (long <= maxSide) return { width, height };
@@ -187,7 +187,7 @@ function flattenAlpha(rgba, width, height) {
 // terms), flooring the short axis at SHORT_AXIS_MIN. Encoder and decoder must
 // compute identical results from the same ratio; the layout depends on it.
 function splitByAspect(maxTerms, ratio) {
-  if (!(ratio > 0)) throw new Error("invalid aspect ratio");
+  if (!(ratio > 0)) throw new Error('invalid aspect ratio');
   if (ratio >= 1) {
     return {
       nx: maxTerms,
@@ -250,15 +250,15 @@ function quantizeAspect(width, height) {
 }
 
 function packHeader({ hasAlpha, orientation, lumaShort }) {
-  if (orientation !== 0 && orientation !== 1) throw new Error("invalid orientation");
-  if (lumaShort < 3 || lumaShort > 10) throw new Error("invalid lumaShort");
+  if (orientation !== 0 && orientation !== 1) throw new Error('invalid orientation');
+  if (lumaShort < 3 || lumaShort > 10) throw new Error('invalid lumaShort');
   const stored = lumaShort === ESCAPE_LUMASHORT ? 7 : lumaShort - 3;
   return ((hasAlpha ? 1 : 0) << 4) | (orientation << 3) | stored;
 }
 
 function unpackHeader(byte) {
   const version = byte >> 5;
-  if (version !== 0) throw new Error("unknown version");
+  if (version !== 0) throw new Error('unknown version');
   const stored = byte & 7;
   return {
     version,
@@ -277,7 +277,7 @@ class BitWriter {
 
   write(value, bits) {
     if (!Number.isInteger(value) || value < 0 || value > (1 << bits) - 1) {
-      throw new Error("value does not fit field");
+      throw new Error('value does not fit field');
     }
     for (let i = bits - 1; i >= 0; i--) {
       this.current |= ((value >> i) & 1) << (7 - this.bitPos);
@@ -310,7 +310,7 @@ class BitReader {
   read(bits) {
     let value = 0;
     for (let i = 0; i < bits; i++) {
-      if (this.bytePos >= this.bytes.length) throw new Error("truncated");
+      if (this.bytePos >= this.bytes.length) throw new Error('truncated');
       value = (value << 1) | ((this.bytes[this.bytePos] >> (7 - this.bitPos)) & 1);
       this.bitPos++;
       if (this.bitPos === 8) {
@@ -432,20 +432,20 @@ export function encode(rgba, width, height) {
   const out = [packHeader({ hasAlpha, orientation: aspect.orientation, lumaShort: aspect.lumaShort })];
   for (const byte of payload) out.push(byte);
   while (out.length % 3 !== 0) out.push(0);
-  if (out.length > MAX_ENCODED_SIZE) throw new Error("encoded size exceeds maximum");
+  if (out.length > MAX_ENCODED_SIZE) throw new Error('encoded size exceeds maximum');
   return Uint8Array.from(out);
 }
 
 export function decode(hash, options = {}) {
   const bytes = normalizeHash(hash);
-  if (bytes.length < 1 || bytes.length % 3 !== 0) throw new Error("invalid length");
-  if (bytes.length > MAX_ENCODED_SIZE) throw new Error("oversized");
+  if (bytes.length < 1 || bytes.length % 3 !== 0) throw new Error('invalid length');
+  if (bytes.length > MAX_ENCODED_SIZE) throw new Error('oversized');
   const header = unpackHeader(bytes[0]);
   const reader = new BitReader(bytes.subarray(1));
   let extremeRatio = null;
   if (header.lumaShort === ESCAPE_LUMASHORT) {
     extremeRatio = reader.read(EXTREME_RATIO_BITS);
-    if (extremeRatio < 1) throw new Error("invalid extreme ratio");
+    if (extremeRatio < 1) throw new Error('invalid extreme ratio');
   }
   const ratio = ratioFromHeader(header.orientation, header.lumaShort, extremeRatio);
 
@@ -477,13 +477,13 @@ export function decode(hash, options = {}) {
 }
 
 export function toBase64(hash) {
-  let binary = "";
+  let binary = '';
   for (let i = 0; i < hash.length; i++) binary += String.fromCharCode(hash[i]);
-  return btoa(binary).replace(/=+$/, "");
+  return btoa(binary).replace(/=+$/, '');
 }
 
 export function fromBase64(base64) {
-  if (/=/.test(base64)) throw new Error("padded base64 is not canonical");
+  if (/=/.test(base64)) throw new Error('padded base64 is not canonical');
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -577,15 +577,15 @@ function decodeHeight(options, ratio, width) {
 }
 
 function checkedDim(v) {
-  if (!Number.isInteger(v) || v < 1) throw new Error("invalid decode dimensions");
+  if (!Number.isInteger(v) || v < 1) throw new Error('invalid decode dimensions');
   return v;
 }
 
 function normalizeHash(hash) {
-  if (typeof hash === "string") return fromBase64(hash);
+  if (typeof hash === 'string') return fromBase64(hash);
   if (hash instanceof Uint8Array) return hash;
   if (ArrayBuffer.isView(hash)) return new Uint8Array(hash.buffer, hash.byteOffset, hash.byteLength);
-  throw new Error("invalid hash");
+  throw new Error('invalid hash');
 }
 
 function sinc(x) {
@@ -593,7 +593,7 @@ function sinc(x) {
 }
 
 function assertRgba(rgba, width, height) {
-  if (!(rgba instanceof Uint8Array) && !ArrayBuffer.isView(rgba)) throw new Error("rgba must be a byte array");
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) throw new Error("invalid dimensions");
-  if (rgba.length !== width * height * 4) throw new Error("rgba length does not match dimensions");
+  if (!(rgba instanceof Uint8Array) && !ArrayBuffer.isView(rgba)) throw new Error('rgba must be a byte array');
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) throw new Error('invalid dimensions');
+  if (rgba.length !== width * height * 4) throw new Error('rgba length does not match dimensions');
 }

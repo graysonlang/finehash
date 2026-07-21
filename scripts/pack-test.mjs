@@ -43,11 +43,11 @@ try {
 
   check('tarball contents are src/ + metadata only', () => {
     const listing = run('tar', ['-tzf', tarball]);
-    const entries = listing.trim().split('\n').map((l) => l.replace(/^package\//, ''));
+    const entries = listing.trim().split('\n').map(l => l.replace(/^package\//, ''));
     if (!entries.includes('src/finehash.js')) throw new Error('src/finehash.js missing');
     if (!entries.includes('src/finehash.d.ts')) throw new Error('src/finehash.d.ts missing');
     const stray = entries.filter(
-      (e) => !e.startsWith('src/') && !['package.json', 'README.md', 'LICENSE.md'].includes(e),
+      e => !e.startsWith('src/') && !['package.json', 'README.md', 'LICENSE.md'].includes(e),
     );
     if (stray.length) throw new Error(`unexpected files in tarball: ${stray.join(', ')}`);
   });

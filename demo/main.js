@@ -529,7 +529,11 @@ function setupThemeAndChecker() {
   const segButtons = [...document.querySelectorAll('.theme-seg .icon-btn')];
   const themeMode = () => {
     let stored = null;
-    try { stored = localStorage.getItem(THEME_KEY); } catch { /* private mode, etc. */ }
+    try {
+      stored = localStorage.getItem(THEME_KEY);
+    } catch {
+      /* private mode, etc. */
+    }
     return stored === 'light' || stored === 'dark' ? stored : 'system';
   };
   const renderTheme = () => {
@@ -612,6 +616,7 @@ window.addEventListener('load', async () => {
   let tail = Promise.resolve();
   for (const url of urls) {
     const pending = buildRow(url).catch(err => (console.error(err), null));
-    tail = tail.then(() => pending).then(row => { if (row) tbody.append(row); });
+    tail = tail.then(() => pending).then(
+      (row) => { if (row) tbody.append(row); });
   }
 });

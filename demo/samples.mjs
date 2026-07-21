@@ -115,11 +115,11 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
       makeCanvasSample('3d.png', 256, 256, (ctx) => {
         // Blue sphere (drawn first, partly occluded by the cube).
         const sphere = ctx.createRadialGradient(63, 95, 0, 63, 95, 67);
-        sphere.addColorStop(0,        'rgb(207,247,255)');
+        sphere.addColorStop(0, 'rgb(207,247,255)');
         sphere.addColorStop(0.258319, 'rgb(138,194,255)');
         sphere.addColorStop(0.491594, 'rgb(86,126,227)');
         sphere.addColorStop(0.686568, 'rgb(56,89,178)');
-        sphere.addColorStop(1,        'rgb(31,53,108)');
+        sphere.addColorStop(1, 'rgb(31,53,108)');
         ctx.fillStyle = sphere;
         ctx.beginPath();
         ctx.arc(71.5, 101.5, 58.5, 0, Math.PI * 2);
@@ -129,11 +129,11 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
         // the upper-left, darkening to the right - for the matte finish of the original
         // icon. (The SVG's apex conic gradient read as too specular here.)
         const cone = ctx.createLinearGradient(119.5, 0, 241, 0);
-        cone.addColorStop(0,    'rgb(255,168,168)');
+        cone.addColorStop(0, 'rgb(255,168,168)');
         cone.addColorStop(0.30, 'rgb(255,150,150)');
         cone.addColorStop(0.55, 'rgb(238,95,95)');
         cone.addColorStop(0.78, 'rgb(185,52,52)');
-        cone.addColorStop(1,    'rgb(150,30,30)');
+        cone.addColorStop(1, 'rgb(150,30,30)');
         ctx.fillStyle = cone;
         ctx.beginPath();
         ctx.moveTo(184.5, 11);
@@ -226,7 +226,9 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
           g += 82 * glow + 78 * core;
           b += 38 * glow + 66 * core;
           const cloud = fbm(u * 6, v * 10, 11) * (0.25 + 0.75 * t);
-          r += 60 * cloud; g += 55 * cloud; b += 45 * cloud;
+          r += 60 * cloud;
+          g += 55 * cloud;
+          b += 45 * cloud;
           return [r, g, b];
         }
         const d = (v - horizon) / (1 - horizon);
@@ -235,7 +237,9 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
         let g = 138 + 70 * n - 40 * d;
         let b = 58 + 40 * n - 20 * d;
         const haze = Math.exp(-d * 7);
-        r += (200 - r) * haze; g += (215 - g) * haze; b += (235 - b) * haze;
+        r += (200 - r) * haze;
+        g += (215 - g) * haze;
+        b += (235 - b) * haze;
         return [r, g, b];
       }),
 
@@ -266,7 +270,9 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
           for (const [cx, cy, rad, k, lr, lg, lb] of lights) {
             const d = Math.hypot((u - cx) * 1.5, v - cy);
             const s = Math.min(1, Math.max(0, (1 - d / rad) * k));
-            r += lr * s; g += lg * s; b += lb * s;
+            r += lr * s;
+            g += lg * s;
+            b += lb * s;
           }
           return [r, g, b];
         };
@@ -291,9 +297,13 @@ export function createSampleSuite({ makeCanvas, makeImageData }) {
         let r = base, g = base * 0.94, b = base * 1.05;
         const win = vnoise(u * 42, v * 30, 55);
         const lit = win > 0.82 ? (win - 0.82) / 0.18 : 0;
-        r += 190 * lit; g += 150 * lit; b += 70 * lit;
+        r += 190 * lit;
+        g += 150 * lit;
+        b += 70 * lit;
         const glow = Math.exp(-(1 - v) * 5.5);
-        r += 70 * glow; g += 46 * glow; b += 18 * glow;
+        r += 70 * glow;
+        g += 46 * glow;
+        b += 18 * glow;
         return [r, g, b];
       }),
 
